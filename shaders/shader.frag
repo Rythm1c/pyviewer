@@ -32,5 +32,5 @@ void main() {
     // Combine results
     vec3 result = (ambient + diffuse + specular) * input_color;
 
-    out_color = vec4(normal, 1.0);
+    out_color = vec4(result, 1.0);
 }
