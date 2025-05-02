@@ -57,14 +57,14 @@ glfw.set_window_size_callback(window, handle_resize)
 glfw.make_context_current(window)
 
 model = Model(
-    pos=[0, -3, -5],
+    pos=[0, -2, -5],
     rot=[0, glm.radians(90.0), 0],
-    scale=[0.1, 0.1, 0.1],
-    color=[0.0, 0.0, 1.0],
+    scale=[3.0, 3.0, 3.0],
+    color=[1.0, 1.0, 1.0],
 )
 
-#model.add_mesh(get_cube_mesh())
-model.load_gltf("models/astronaut/scene.gltf")
+model.add_mesh(get_cube_mesh())
+# model.load_gltf("models/astronaut/scene.gltf")
 
 shader = compileProgram(
     compileShader(vertex_src, GL_VERTEX_SHADER),
