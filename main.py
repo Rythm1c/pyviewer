@@ -1,8 +1,9 @@
 import glfw
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
-import numpy as np
 import time
+from pyglm import glm
+
 
 from model import *
 from mesh import *
@@ -57,11 +58,12 @@ glfw.make_context_current(window)
 
 model = Model(
     pos=[0, -3, -5],
-    rot=[0, 0, 0],
+    rot=[0, glm.radians(90.0), 0],
     scale=[0.1, 0.1, 0.1],
+    color=[0.0, 0.0, 1.0],
 )
 
-# cube.add_mesh(get_cube_mesh())
+#model.add_mesh(get_cube_mesh())
 model.load_gltf("models/astronaut/scene.gltf")
 
 shader = compileProgram(
@@ -170,7 +172,7 @@ def update():
 
 glEnable(GL_DEPTH_TEST)
 glUseProgram(shader)
-glClearColor(1.0, 0.1, 0.1, 1)
+glClearColor(0.0, 1.1, 0.1, 1)
 
 # the main application loop
 while not glfw.window_should_close(window):

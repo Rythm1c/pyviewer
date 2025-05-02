@@ -3,7 +3,7 @@ from pyglm import glm
 import numpy as np
 from mesh import Mesh
 from pygltflib import GLTF2
-import os, base64, struct
+import os, base64
 
 
 class Model:
@@ -66,7 +66,7 @@ class Model:
             mesh.destroy()
         self.meshes = []
 
-    def load_gltf(self,filepath):
+    def load_gltf(self, filepath):
         gltf = GLTF2().load(filepath)
 
         # Figure out base directory for external files
@@ -85,14 +85,35 @@ class Model:
                 buffer_data = f.read()
 
         # Get first mesh
-       
+
+        def get_textures(gltf):
+            textures = []
+            for image in gltf.images:
+                if image.uri.startswith("data:"):
+                    # Embedded base64 image
+                    encoded = image.uri.split(",")[1]
+                    image_data = base64.b64decode(encoded)
+                else:
+                    # External image file
+                    img_path = os.path.join(base_dir, image.uri)
+                    with open(img_path, "rb") as f:
+                        image_data = f.read()
+                textures.append(image_data)
+            return textures
+
+        texures = get_textures(gltf)
+
         for mesh in gltf.meshes:
-            """ primitive = gltf.meshes[0].primitives[0] """
+            """primitive = gltf.meshes[0].primitives[0]"""
+
             for primitive in mesh.primitives:
+
                 def read_accessor(accessor_idx):
                     accessor = gltf.accessors[accessor_idx]
                     bufferView = gltf.bufferViews[accessor.bufferView]
-                    byteOffset = (bufferView.byteOffset or 0) + (accessor.byteOffset or 0)
+                    byteOffset = (bufferView.byteOffset or 0) + (
+                        accessor.byteOffset or 0
+                    )
                     count = accessor.count
 
                     componentType = accessor.componentType
@@ -109,32 +130,41 @@ class Model:
                         raise Exception(f"Unsupported componentType {componentType}")
 
                     typeName = accessor.type
-                    num_components = {
-                        'SCALAR': 1,
-                        'VEC2': 2,
-                        'VEC3': 3,
-                        'VEC4': 4
-                    }[typeName]
+                    num_components = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}[
+                        typeName
+                    ]
 
                     if bufferView.byteStride:  # data is interleaved
                         stride = bufferView.byteStride
                         array = []
                         for i in range(count):
                             offset = byteOffset + i * stride
-                            element = np.frombuffer(buffer_data, dtype=dtype, count=num_components, offset=offset)
+                            element = np.frombuffer(
+                                buffer_data,
+                                dtype=dtype,
+                                count=num_components,
+                                offset=offset,
+                            )
                             array.append(element)
                         return np.array(array)
                     else:  # tightly packed
                         total_count = count * num_components
-                        array = np.frombuffer(buffer_data, dtype=dtype, count=total_count, offset=byteOffset)
+                        array = np.frombuffer(
+                            buffer_data,
+                            dtype=dtype,
+                            count=total_count,
+                            offset=byteOffset,
+                        )
                         array = array.reshape((count, num_components))
                         return array
 
                 positions = read_accessor(primitive.attributes.POSITION)
                 normals = read_accessor(primitive.attributes.NORMAL)
                 indices = read_accessor(primitive.indices)
-                    
-                vertex_data = np.hstack((positions, normals)).astype(np.float32).flatten()
+
+                vertex_data = (
+                    np.hstack((positions, normals)).astype(np.float32).flatten()
+                )
 
                 mesh = Mesh(vertex_data, indices)
                 mesh.create()
